@@ -1,8 +1,10 @@
 import UIKit
 
-class ImagesListViewController: UIViewController {
+final class ImagesListViewController: UIViewController {
     
     @IBOutlet private var tableView: UITableView!
+    
+    private let currentDate = Date()
     
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -10,8 +12,6 @@ class ImagesListViewController: UIViewController {
         formatter.timeStyle = .none
         return formatter
     }()
-    
-    let padding: CGFloat = 8
     
     private let photosName: [String] = Array(0..<20).map{ "\($0)" }
     
@@ -22,24 +22,19 @@ class ImagesListViewController: UIViewController {
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
     }
     
-    func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
+    private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         guard let image = UIImage(named: photosName[indexPath.row]) else { return }
         cell.cellImage.image = image
-        cell.dateLabel.text = dateFormatter.string(from: Date())
-        if indexPath.row % 2 == 0 {
-            cell.likeButton.setImage(UIImage(named: "Active"), for: .normal)
-        }
-        else
-        {
-            cell.likeButton.setImage(UIImage(named: "No Active"), for: .normal)
-        }
+        cell.dateLabel.text = dateFormatter.string(from: currentDate)
+        let imageName = indexPath.row % 2 == 0 ? "Active" : "No Active"
+        cell.likeButton.setImage(UIImage(named: imageName), for: .normal)
     }
 }
 
 extension ImagesListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
+        // TODO: - Добавить логику при нажатии на ячейку
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -59,16 +54,17 @@ extension ImagesListViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-            let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier, for: indexPath)
-            
-            guard let imageListCell = cell as? ImagesListCell else {
-                return UITableViewCell()
-            }
-            
-        configCell(for: imageListCell, with: indexPath)
-            return imageListCell
+        guard let imageListCell = tableView.dequeueReusableCell(
+            withIdentifier: ImagesListCell.reuseIdentifier,
+            for: indexPath
+        ) as? ImagesListCell else {
+            return UITableViewCell()
         }
+        
+        configCell(for: imageListCell, with: indexPath)
+        return imageListCell
+    }
 }
-    
-    
+
+
 
