@@ -1,10 +1,13 @@
 import UIKit
+import ProgressHUD
 
 final class AuthViewController: UIViewController {
     // MARK: - Properties
     private let showWebViewSegueIdentifier = "ShowWebView"
-    private let storage = OAuth2TokenStorage()
     weak var delegate: AuthViewControllerDelegate?
+    
+    private var isFetchingToken = false
+    
     // MARK: - ViewDidLoad
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -14,6 +17,9 @@ final class AuthViewController: UIViewController {
     // MARK: - Navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showWebViewSegueIdentifier {
+            guard !isFetchingToken else {
+                  return
+              }
             guard
                 let webViewViewController = segue.destination as? WebViewViewController
             else {
@@ -32,17 +38,36 @@ final class AuthViewController: UIViewController {
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.backBarButtonItem?.tintColor = UIColor(named: "ypBlack")
     }
+    
+    private func showLoginErrorAlert() {
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Не удалось войти в систему",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: nil))
+        present(alert, animated: true)
+    }
+
 }
 
 // MARK: - WebViewViewControllerDelegate
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
+        isFetchingToken = true
+        UIBlockingProgressHUD.show()
+        
         OAuth2Service.shared.fetchOAuthToken(code: code) { result in
+            
+            UIBlockingProgressHUD.dismiss()
+            self.isFetchingToken = false
+            
             switch result {
             case .success:
                 self.delegate?.didAuthenticate(self)
             case .failure(let error):
                 print("Error fetching token: \(error.localizedDescription)")
+                self.showLoginErrorAlert()
             }
         }
     }
