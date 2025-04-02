@@ -27,6 +27,7 @@ final class AuthViewController: UIViewController {
                 return
             }
             webViewViewController.delegate = self
+            webViewViewController.modalPresentationStyle = .fullScreen
         } else {
             super.prepare(for: segue, sender: sender)
         }
@@ -38,16 +39,6 @@ final class AuthViewController: UIViewController {
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.backBarButtonItem?.tintColor = UIColor(named: "ypBlack")
     }
-    
-    private func showLoginErrorAlert() {
-        let alert = UIAlertController(
-            title: "Что-то пошло не так",
-            message: "Не удалось войти в систему",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: nil))
-        present(alert, animated: true)
-    }
 
 }
 
@@ -57,7 +48,8 @@ extension AuthViewController: WebViewViewControllerDelegate {
         isFetchingToken = true
         UIBlockingProgressHUD.show()
         
-        OAuth2Service.shared.fetchOAuthToken(code: code) { result in
+        OAuth2Service.shared.fetchOAuthToken(code: code) { [weak self] result in
+            guard let self = self else { return }
             
             UIBlockingProgressHUD.dismiss()
             self.isFetchingToken = false
@@ -70,6 +62,15 @@ extension AuthViewController: WebViewViewControllerDelegate {
                 self.showLoginErrorAlert()
             }
         }
+    }
+    
+    private func showLoginErrorAlert() {
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Не удалось войти в систему",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: nil))
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {

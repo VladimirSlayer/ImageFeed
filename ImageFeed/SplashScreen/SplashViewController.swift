@@ -11,6 +11,7 @@ final class SplashViewController: UIViewController, AuthViewControllerDelegate {
     // MARK: - ViewDidAppear
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        storage.clearToken()
         navigate()
     }
     // MARK: - Check for token
@@ -34,10 +35,12 @@ final class SplashViewController: UIViewController, AuthViewControllerDelegate {
         view.backgroundColor = UIColor(named: "YP_Black")
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(logoImageView)
-        logoImageView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor).isActive = true
-        logoImageView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor).isActive = true
-        logoImageView.widthAnchor.constraint(equalToConstant: 75).isActive = true
-        logoImageView.heightAnchor.constraint(equalToConstant: 78).isActive = true
+        NSLayoutConstraint.activate([
+           logoImageView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+           logoImageView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+           logoImageView.widthAnchor.constraint(equalToConstant: 75),
+           logoImageView.heightAnchor.constraint(equalToConstant: 78)
+        ])
     }
 }
 
@@ -101,9 +104,7 @@ extension SplashViewController {
             self?.fetchProfile(token)
         })
         
-        alert.addAction(UIAlertAction(title: "Выход", style: .destructive) { _ in
-            exit(0)
-        })
+        alert.addAction(UIAlertAction(title: "Выход", style: .cancel, handler: nil))
         
         present(alert, animated: true)
     }

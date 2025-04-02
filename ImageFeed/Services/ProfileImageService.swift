@@ -22,6 +22,7 @@ final class ProfileImageService {
     private let urlSession = URLSession.shared
     private var task: URLSessionTask?
     private var lastUsername: String?
+    private let storage = OAuth2TokenStorage()
 
     private(set) var avatarURL: String?
 
@@ -30,21 +31,15 @@ final class ProfileImageService {
         assert(Thread.isMainThread)
 
         // Проверка на гонку
-        if let task = task {
-            if lastUsername != username {
-                task.cancel()
-            } else {
-                completion(.failure(AuthServiceError.invalidRequest))
-                return
-            }
-        } else if lastUsername == username {
+        if lastUsername == username {
             completion(.failure(AuthServiceError.invalidRequest))
             return
         }
-
+        task?.cancel()
+        
         lastUsername = username
 
-        guard let token = OAuth2TokenStorage().token else {
+        guard let token = storage.token else {
             completion(.failure(AuthServiceError.invalidRequest))
             return
         }
@@ -56,13 +51,14 @@ final class ProfileImageService {
 
         let task = urlSession.objectTask(for: request) { [weak self] (result: Result<UserResult, Error>) in
             DispatchQueue.main.async {
-                self?.task = nil
-                self?.lastUsername = nil
+                guard let self = self else { return }
+                self.task = nil
+                self.lastUsername = nil
 
                 switch result {
                 case .success(let userResult):
                     let avatarURL = userResult.profileImage.small
-                    self?.avatarURL = avatarURL
+                    self.avatarURL = avatarURL
                     completion(.success(avatarURL))
 
                     NotificationCenter.default.post(

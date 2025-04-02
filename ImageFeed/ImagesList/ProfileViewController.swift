@@ -17,26 +17,26 @@ final class ProfileViewController: UIViewController {
         updateProfileInfo()
         
         profileImageServiceObserver = NotificationCenter.default
-                    .addObserver(
-                        forName: ProfileImageService.didChangeNotification,
-                        object: nil,
-                        queue: .main
-                    ) { [weak self] _ in
-                        guard let self = self else { return }
-                        self.updateAvatar()
-                    }
-                updateAvatar()
+            .addObserver(
+                forName: ProfileImageService.didChangeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                self.updateAvatar()
+            }
+        updateAvatar()
     }
     
-    private func updateAvatar() {                                  
-            guard
-                let profileImageURL = ProfileImageService.shared.avatarURL,
-                let url = URL(string: profileImageURL)
-            else { return }
-            let processor = RoundCornerImageProcessor(cornerRadius: 35)
-            profilePicture.kf.setImage(with: url,
-                                       options: [.processor(processor)])
-        }
+    private func updateAvatar() {
+        guard
+            let profileImageURL = ProfileImageService.shared.avatarURL,
+            let url = URL(string: profileImageURL)
+        else { return }
+        let processor = RoundCornerImageProcessor(cornerRadius: 35)
+        profilePicture.kf.setImage(with: url,
+                                   options: [.processor(processor)])
+    }
     
     
     private func setupUI() {
