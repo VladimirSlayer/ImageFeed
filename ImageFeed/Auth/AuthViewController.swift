@@ -1,10 +1,13 @@
 import UIKit
+import ProgressHUD
 
 final class AuthViewController: UIViewController {
     // MARK: - Properties
     private let showWebViewSegueIdentifier = "ShowWebView"
-    private let storage = OAuth2TokenStorage()
     weak var delegate: AuthViewControllerDelegate?
+    
+    private var isFetchingToken = false
+    
     // MARK: - ViewDidLoad
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -14,6 +17,9 @@ final class AuthViewController: UIViewController {
     // MARK: - Navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showWebViewSegueIdentifier {
+            guard !isFetchingToken else {
+                  return
+              }
             guard
                 let webViewViewController = segue.destination as? WebViewViewController
             else {
@@ -21,6 +27,7 @@ final class AuthViewController: UIViewController {
                 return
             }
             webViewViewController.delegate = self
+            webViewViewController.modalPresentationStyle = .fullScreen
         } else {
             super.prepare(for: segue, sender: sender)
         }
@@ -32,19 +39,38 @@ final class AuthViewController: UIViewController {
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.backBarButtonItem?.tintColor = UIColor(named: "ypBlack")
     }
+
 }
 
 // MARK: - WebViewViewControllerDelegate
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        OAuth2Service.shared.fetchOAuthToken(code: code) { result in
+        isFetchingToken = true
+        UIBlockingProgressHUD.show()
+        
+        OAuth2Service.shared.fetchOAuthToken(code: code) { [weak self] result in
+            guard let self = self else { return }
+            
+            UIBlockingProgressHUD.dismiss()
+            self.isFetchingToken = false
+            
             switch result {
             case .success:
                 self.delegate?.didAuthenticate(self)
             case .failure(let error):
                 print("Error fetching token: \(error.localizedDescription)")
+                self.showLoginErrorAlert()
             }
         }
+    }
+    
+    private func showLoginErrorAlert() {
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Не удалось войти в систему",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: nil))
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {

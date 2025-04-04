@@ -5,40 +5,48 @@ final class SplashViewController: UIViewController, AuthViewControllerDelegate {
     // MARK: - Properties
     private let showAuthenticationScreenSegueIdentifier = "showAuthorizationFlow"
     private let showPageScreenSegueIdentifier = "showProfileFlow"
+    private let profileService = ProfileService.shared
     private let storage = OAuth2TokenStorage()
+    private let logoImageView = UIImageView(image: UIImage(named: "YP_Logo"))
     // MARK: - ViewDidAppear
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        storage.clearToken()
         navigate()
     }
     // MARK: - Check for token
     private func navigate(){
         if let token = storage.token {
-            performSegue(withIdentifier: showPageScreenSegueIdentifier, sender: nil)
+            fetchProfile(token)
         } else {
-            performSegue(withIdentifier: showAuthenticationScreenSegueIdentifier, sender: nil)
+            let storyboard = UIStoryboard(name: "Main", bundle: .main)
+            guard let authViewController = storyboard.instantiateViewController(withIdentifier: "AuthViewController") as? AuthViewController else {
+                assertionFailure("Unable to instantiate AuthViewController from storyboard")
+                return
+            }
+            
+            authViewController.delegate = self
+            authViewController.modalPresentationStyle = .fullScreen
+            present(authViewController, animated: true, completion: nil)
         }
+    }
+    
+    private func setupUI() {
+        view.backgroundColor = UIColor(named: "YP_Black")
+        logoImageView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(logoImageView)
+        NSLayoutConstraint.activate([
+           logoImageView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+           logoImageView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+           logoImageView.widthAnchor.constraint(equalToConstant: 75),
+           logoImageView.heightAnchor.constraint(equalToConstant: 78)
+        ])
     }
 }
 
 // MARK: - Extension for switching controllers
 
 extension SplashViewController {
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showAuthenticationScreenSegueIdentifier {
-            guard
-                let navigationController = segue.destination as? UINavigationController,
-                let viewController = navigationController.viewControllers[0] as? AuthViewController
-            else {
-                assertionFailure("Failed to prepare for \(showAuthenticationScreenSegueIdentifier)")
-                return
-            }
-            viewController.delegate = self
-            
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
-    }
     
     private func switchToTabBarController() {
         guard let window = UIApplication.shared.windows.first else {
@@ -51,6 +59,53 @@ extension SplashViewController {
         window.rootViewController = tabBarController
     }
     func didAuthenticate(_ vc: AuthViewController) {
-        switchToTabBarController()
+        vc.dismiss(animated: true)
+        
+        guard let token = storage.token else {
+            return
+        }
+        
+        fetchProfile(token)
+    }
+    private func fetchProfile(_ token: String) {
+        UIBlockingProgressHUD.show()
+        profileService.fetchProfile(token) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+            
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let profile):
+                ProfileImageService.shared.fetchProfileImageURL(username: profile.username) { imageResult in
+                    switch imageResult {
+                    case .success(let url):
+                        print("Аватарка загружена: \(url)")
+                        // Можно в будущем передать в UI
+                    case .failure(let error):
+                        print("Ошибка загрузки аватарки: \(error)")
+                    }
+                }
+                self.switchToTabBarController()
+                
+            case .failure(let error):
+                self.showProfileLoadErrorAlert(error: error)
+            }
+        }
+    }
+    private func showProfileLoadErrorAlert(error: Error) {
+        let alert = UIAlertController(
+            title: "Не удалось загрузить профиль",
+            message: "Проверьте подключение к интернету и попробуйте снова.\n\nОшибка: \(error.localizedDescription)",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Повторить", style: .default) { [weak self] _ in
+            guard let token = self?.storage.token else { return }
+            self?.fetchProfile(token)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Выход", style: .cancel, handler: nil))
+        
+        present(alert, animated: true)
     }
 }
