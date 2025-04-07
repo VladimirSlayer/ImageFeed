@@ -55,6 +55,10 @@ extension ImagesListViewController: UITableViewDelegate {
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
     
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        
+    }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         guard let image = UIImage(named: photosName[indexPath.row]) else { return 200 }
         let aspectRatio = image.size.height / image.size.width

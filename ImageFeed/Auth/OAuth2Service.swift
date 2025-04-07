@@ -46,6 +46,7 @@ final class OAuth2Service {
                 case .success(let responseBody):
                     let token = responseBody.access_token
                     self.tokenStorage.token = token
+                    print(self.tokenStorage.token!)
                     completion(.success(token))
                 case .failure(let error):
                     print("[OAuth2Service]: Failed to fetch token - \(error.localizedDescription)")
