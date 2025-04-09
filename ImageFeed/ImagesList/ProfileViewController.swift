@@ -81,7 +81,25 @@ final class ProfileViewController: UIViewController {
         bioLabel.textColor = .white
         
         buttonView.setImage(UIImage(named: "exit_button"), for: .normal)
+        buttonView.addTarget(self, action: #selector(didTapLogout), for: .touchUpInside)
     }
+    
+    @objc private func didTapLogout() {
+        let alert = UIAlertController(
+            title: "Пока, пока!",
+            message: "Вы уверены, что хотите выйти?",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "Выйти", style: .destructive) { _ in
+            ProfileLogoutService.shared.logout()
+        })
+
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+
+        present(alert, animated: true)
+    }
+
     
     private func updateProfileInfo() {
         guard let profile = ProfileService.shared.profile else {

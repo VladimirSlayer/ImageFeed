@@ -26,6 +26,9 @@ final class ProfileImageService {
 
     private(set) var avatarURL: String?
 
+    func clearAvatarURL() {
+        avatarURL = nil
+    }
     
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
         assert(Thread.isMainThread)

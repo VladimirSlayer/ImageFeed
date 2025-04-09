@@ -5,12 +5,14 @@ final class AuthViewController: UIViewController {
     // MARK: - Properties
     private let showWebViewSegueIdentifier = "ShowWebView"
     weak var delegate: AuthViewControllerDelegate?
+    let storage = OAuth2TokenStorage()
     
     private var isFetchingToken = false
     
     // MARK: - ViewDidLoad
     override func viewDidLoad() {
         super.viewDidLoad()
+        storage.clearToken()
         configureBackButton()
         
     }

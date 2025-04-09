@@ -9,6 +9,9 @@ struct Photo {
     let thumbImageURL: String
     let largeImageURL: String
     let isLiked: Bool
+    var fullImageURL: URL? {
+        return URL(string: largeImageURL)
+    }
 }
 
 extension Photo {
