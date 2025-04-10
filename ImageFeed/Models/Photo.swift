@@ -12,12 +12,14 @@ struct Photo {
     var fullImageURL: URL? {
         return URL(string: largeImageURL)
     }
+    private static let dateFormatter: ISO8601DateFormatter = {
+        ISO8601DateFormatter()
+    }()
 }
 
 extension Photo {
     init(from result: PhotoResult) {
-        let formatter = ISO8601DateFormatter()
-        let date = result.createdAt.flatMap { formatter.date(from: $0) }
+        let date = result.createdAt.flatMap { Photo.dateFormatter.date(from: $0) }
 
         self.init(
             id: result.id,
