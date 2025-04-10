@@ -11,7 +11,6 @@ final class SplashViewController: UIViewController, AuthViewControllerDelegate {
     // MARK: - ViewDidAppear
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        storage.clearToken()
         navigate()
     }
     // MARK: - Check for token
@@ -30,6 +29,8 @@ final class SplashViewController: UIViewController, AuthViewControllerDelegate {
             present(authViewController, animated: true, completion: nil)
         }
     }
+    
+    
     
     private func setupUI() {
         view.backgroundColor = UIColor(named: "YP_Black")

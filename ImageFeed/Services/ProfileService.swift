@@ -25,6 +25,10 @@ final class ProfileService {
     private var task: URLSessionTask?
     private var lastToken: String?
     private(set) var profile: Profile?
+    
+    func clearProfile() {
+        profile = nil
+    }
 
     // Создание запроса к /me с токеном
     private func makeProfileRequest(token: String) -> URLRequest? {
