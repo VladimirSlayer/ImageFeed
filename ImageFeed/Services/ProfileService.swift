@@ -15,6 +15,15 @@ struct Profile {
     let name: String
     let loginName: String
     let bio: String?
+    
+    static var mock: Profile {
+            return Profile(
+                username: "mockuser",
+                name: "Mock User",
+                loginName: "@mockuser",
+                bio: "Это мок-биография для тестов"
+            )
+        }
 }
 
 // MARK: - Сервис получения профиля
@@ -29,7 +38,7 @@ final class ProfileService {
     func clearProfile() {
         profile = nil
     }
-
+    
     // Создание запроса к /me с токеном
     private func makeProfileRequest(token: String) -> URLRequest? {
         guard let url = URL(string: "https://api.unsplash.com/me") else {
@@ -42,11 +51,11 @@ final class ProfileService {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         return request
     }
-
+    
     /// Загрузка профиля
     func fetchProfile(_ token: String, completion: @escaping (Result<Profile, Error>) -> Void) {
         assert(Thread.isMainThread)
-
+        
         // Защита от гонки запросов
         if let task = task {
             if lastToken != token {
@@ -59,35 +68,35 @@ final class ProfileService {
             completion(.failure(AuthServiceError.invalidRequest))
             return
         }
-
+        
         lastToken = token
-
+        
         guard let request = makeProfileRequest(token: token) else {
             completion(.failure(AuthServiceError.invalidRequest))
             return
         }
-
+        
         let task = urlSession.objectTask(for: request) { [weak self] (result: Result<ProfileResult, Error>) in
             DispatchQueue.main.async {
                 self?.task = nil
                 self?.lastToken = nil
-
+                
                 switch result {
                 case .success(let profileResult):
                     let fullName = [profileResult.first_name, profileResult.last_name]
                         .compactMap { $0 }
                         .joined(separator: " ")
-
+                    
                     let profile = Profile(
                         username: profileResult.username,
                         name: fullName,
                         loginName: "@\(profileResult.username)",
                         bio: profileResult.bio
                     )
-
+                    
                     self?.profile = profile
                     completion(.success(profile))
-
+                    
                 case .failure(let error):
                     print("[ProfileService]: Failed to fetch profile - \(error.localizedDescription)")
                     completion(.failure(error))

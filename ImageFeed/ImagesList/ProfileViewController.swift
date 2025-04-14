@@ -1,7 +1,12 @@
 import UIKit
 import Kingfisher
 
-final class ProfileViewController: UIViewController {
+protocol ProfileViewControllerProtocol: AnyObject {
+    func updateProfileDetails(profile: Profile)
+    func updateAvatar(with url: URL)
+}
+
+final class ProfileViewController: UIViewController & ProfileViewControllerProtocol {
     
     private let profilePicture = UIImageView(image: UIImage(named: "Photo"))
     private let nameLabel = UILabel()
@@ -10,11 +15,18 @@ final class ProfileViewController: UIViewController {
     private let buttonView = UIButton()
     
     private var profileImageServiceObserver: NSObjectProtocol?
+    private var presenter: ProfilePresenterProtocol?
+    
+    func configure(_ presenter: ProfilePresenterProtocol){
+        self.presenter = presenter
+        self.presenter?.view = self
+        
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        updateProfileInfo()
+        presenter?.viewDidLoad()
         
         profileImageServiceObserver = NotificationCenter.default
             .addObserver(
@@ -23,19 +35,13 @@ final class ProfileViewController: UIViewController {
                 queue: .main
             ) { [weak self] _ in
                 guard let self = self else { return }
-                self.updateAvatar()
+                self.presenter?.viewDidLoad()
             }
-        updateAvatar()
     }
     
-    private func updateAvatar() {
-        guard
-            let profileImageURL = ProfileImageService.shared.avatarURL,
-            let url = URL(string: profileImageURL)
-        else { return }
+    internal func updateAvatar(with url: URL) {
         let processor = RoundCornerImageProcessor(cornerRadius: 35)
-        profilePicture.kf.setImage(with: url,
-                                   options: [.processor(processor)])
+        profilePicture.kf.setImage(with: url, options: [.processor(processor)])
     }
     
     
@@ -80,37 +86,16 @@ final class ProfileViewController: UIViewController {
         bioLabel.font = UIFont.systemFont(ofSize: 13, weight: .light)
         bioLabel.textColor = .white
         
+        buttonView.accessibilityIdentifier = "logout button"
         buttonView.setImage(UIImage(named: "exit_button"), for: .normal)
-        buttonView.addTarget(self, action: #selector(didTapLogout), for: .touchUpInside)
+        buttonView.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
     }
     
-    @objc private func didTapLogout() {
-        let alert = UIAlertController(
-            title: "Пока, пока!",
-            message: "Вы уверены, что хотите выйти?",
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: "Выйти", style: .destructive) { _ in
-            ProfileLogoutService.shared.logout()
-        })
-
-        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
-
-        present(alert, animated: true)
-    }
-
-    
-    private func updateProfileInfo() {
-        guard let profile = ProfileService.shared.profile else {
-            print("Профиль отсутствует")
-            return
-        }
-        
-        updateProfileDetails(profile: profile)
+    @objc private func logoutTapped() {
+        presenter?.didTapLogout()
     }
     
-    private func updateProfileDetails(profile: Profile) {
+    func updateProfileDetails(profile: Profile) {
         nameLabel.text = profile.name
         tagLabel.text = profile.loginName
         bioLabel.text = profile.bio

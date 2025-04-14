@@ -19,20 +19,20 @@ final class AuthViewController: UIViewController {
     // MARK: - Navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showWebViewSegueIdentifier {
-            guard !isFetchingToken else {
-                  return
-              }
-            guard
-                let webViewViewController = segue.destination as? WebViewViewController
-            else {
-                assertionFailure("Failed to prepare for \(showWebViewSegueIdentifier)")
-                return
+                guard
+                    let webViewViewController = segue.destination as? WebViewViewController
+                else {
+                    assertionFailure("Failed to prepare for \(showWebViewSegueIdentifier)")
+                    return
+                }
+                let authHelper = AuthHelper()
+                let webViewPresenter = WebViewPresenter(authHelper: authHelper)
+                webViewViewController.presenter = webViewPresenter
+                webViewPresenter.view = webViewViewController
+                webViewViewController.delegate = self
+            } else {
+                super.prepare(for: segue, sender: sender)
             }
-            webViewViewController.delegate = self
-            webViewViewController.modalPresentationStyle = .fullScreen
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
     }
     // MARK: - Private Methods
     private func configureBackButton() {
@@ -41,7 +41,7 @@ final class AuthViewController: UIViewController {
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.backBarButtonItem?.tintColor = UIColor(named: "ypBlack")
     }
-
+    
 }
 
 // MARK: - WebViewViewControllerDelegate
