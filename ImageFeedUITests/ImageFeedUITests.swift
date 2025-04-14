@@ -20,7 +20,7 @@ final class Image_FeedUITests: XCTestCase {
         XCTAssertTrue(loginTextField.waitForExistence(timeout: 5))
         
         loginTextField.tap()
-        loginTextField.typeText("vilonva@gmail.com")
+        loginTextField.typeText("")
         webView.tap()
         webView.swipeUp()
         
@@ -41,7 +41,7 @@ final class Image_FeedUITests: XCTestCase {
         }
 
         // Вводим пароль
-        UIPasteboard.general.string = "Unsplash1337a!"
+        UIPasteboard.general.string = ""
         passwordTextField.press(forDuration: 1.5)
 
         let pasteMenu = app.menuItems["Paste"]
